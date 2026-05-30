@@ -3,7 +3,7 @@ import logging
 from pywebpush import webpush, WebPushException
 from sqlalchemy.orm import Session
 from .. import models
-from ..config import VAPID_PRIVATE_KEY, VAPID_CLAIMS
+from ..config import get_vapid_keys, VAPID_CLAIMS
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def send_push_to_user(db: Session, user_id: int, title: str, body: str, url: str
                     "keys": {"p256dh": sub.p256dh_key, "auth": sub.auth_key},
                 },
                 data=payload,
-                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_private_key=get_vapid_keys(db)["private_key"],
                 vapid_claims=VAPID_CLAIMS,
             )
             sent += 1

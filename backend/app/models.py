@@ -4,6 +4,13 @@ from sqlalchemy.sql import func
 from .database import Base
 
 
+class AppConfig(Base):
+    __tablename__ = "app_config"
+
+    key   = Column(String, primary_key=True)
+    value = Column(Text, nullable=False)
+
+
 class User(Base):
     __tablename__ = "users"
 

@@ -9,3 +9,4 @@ apscheduler==3.10.4
 python-dotenv==1.0.1
 pydantic[email]==2.7.1
 cryptography==42.0.8
+psycopg2-binary==2.9.9

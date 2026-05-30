@@ -3,14 +3,14 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 from ..auth import get_current_user
-from ..config import VAPID_PUBLIC_KEY
+from ..config import get_vapid_keys
 
 router = APIRouter(prefix="/api/push", tags=["push"])
 
 
 @router.get("/vapid-public-key")
-def get_vapid_public_key():
-    return {"public_key": VAPID_PUBLIC_KEY}
+def get_vapid_public_key(db: Session = Depends(get_db)):
+    return {"public_key": get_vapid_keys(db)["public_key"]}
 
 
 @router.post("/subscribe", response_model=schemas.PushSubscriptionOut, status_code=201)
