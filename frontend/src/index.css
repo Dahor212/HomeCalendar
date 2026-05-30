@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+/* FullCalendar overrides */
+.fc {
+  font-family: inherit;
+}
+.fc .fc-button-primary {
+  @apply bg-blue-600 border-blue-600;
+}
+.fc .fc-button-primary:hover {
+  @apply bg-blue-700 border-blue-700;
+}
+.fc .fc-button-primary:disabled {
+  @apply bg-blue-400 border-blue-400;
+}
+.fc .fc-daygrid-event {
+  @apply cursor-pointer;
+}
+.fc .fc-toolbar-title {
+  @apply text-lg font-semibold;
+}
