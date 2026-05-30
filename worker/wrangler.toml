@@ -1,0 +1,19 @@
+name            = "homecalendar-worker"
+main            = "src/index.ts"
+compatibility_date = "2024-05-01"
+
+[[d1_databases]]
+binding      = "DB"
+database_name = "homecalendar"
+database_id  = "REPLACE_WITH_YOUR_D1_ID"   # wrangler d1 create homecalendar
+
+[vars]
+VAPID_SUBJECT = "mailto:admin@homecalendar.local"
+
+# Secrets (set once via CLI, never committed):
+#   wrangler secret put SECRET_KEY
+#   wrangler secret put VAPID_PRIVATE_KEY_JWK
+#   wrangler secret put VAPID_PUBLIC_KEY
+
+[triggers]
+crons = ["* * * * *"]   # Reminder scheduler runs every minute
