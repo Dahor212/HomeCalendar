@@ -1,55 +1,47 @@
-import { useCallback, useRef, useState } from "react";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction";
-import listPlugin from "@fullcalendar/list";
-import csLocale from "@fullcalendar/core/locales/cs";
-import type { EventClickArg, DateSelectArg, EventDropArg } from "@fullcalendar/core";
+import { useCallback, useEffect, useState } from "react";
+import { format, startOfWeek, addDays, isToday, isSameDay, addWeeks } from "date-fns";
+import { cs } from "date-fns/locale";
 import toast from "react-hot-toast";
 import api from "../api/client";
 import { Event, EventCreate } from "../types";
 import EventModal from "../components/EventModal";
 
-const VIEWS = [
-  { key: "dayGridMonth", label: "Měsíc" },
-  { key: "timeGridWeek", label: "Týden" },
-  { key: "timeGridDay", label: "Den" },
-  { key: "listWeek", label: "Seznam" },
-] as const;
+const DAY_LABELS = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 
 export default function CalendarPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [modal, setModal] = useState<{ event?: Event; initialStart?: Date } | null>(null);
-  const [view, setView] = useState<string>("dayGridMonth");
-  const calendarRef = useRef<FullCalendar>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [weekOffset, setWeekOffset] = useState(0);
 
-  const fetchEvents = useCallback(async (start: Date, end: Date) => {
+  const weekStart = startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 });
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  const fetchEvents = useCallback(async () => {
     try {
+      const start = addDays(weekStart, -7);
+      const end = addDays(weekStart, 14);
       const { data } = await api.get<Event[]>("/events", {
         params: { start: start.toISOString(), end: end.toISOString() },
       });
       setEvents(data);
     } catch { /* silent */ }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekOffset]);
 
-  function changeView(v: string) {
-    setView(v);
-    calendarRef.current?.getApi().changeView(v);
-  }
+  useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
-  async function handleSave(data: EventCreate) {
+  async function handleSave(payload: EventCreate) {
     try {
       if (modal?.event) {
-        await api.put(`/events/${modal.event.id}`, data);
+        await api.put(`/events/${modal.event.id}`, payload);
         toast.success("Událost upravena");
       } else {
-        await api.post("/events", data);
+        await api.post("/events", payload);
         toast.success("Událost přidána");
       }
       setModal(null);
-      const cal = calendarRef.current?.getApi();
-      if (cal) await fetchEvents(cal.view.activeStart, cal.view.activeEnd);
+      fetchEvents();
     } catch {
       toast.error("Nepodařilo se uložit událost");
     }
@@ -61,89 +53,130 @@ export default function CalendarPage() {
       await api.delete(`/events/${modal.event.id}`);
       toast.success("Událost smazána");
       setModal(null);
-      const cal = calendarRef.current?.getApi();
-      if (cal) await fetchEvents(cal.view.activeStart, cal.view.activeEnd);
+      fetchEvents();
     } catch {
       toast.error("Nepodařilo se smazat událost");
     }
   }
 
-  async function handleDrop(info: EventDropArg) {
-    try {
-      await api.put(`/events/${info.event.id}`, {
-        start: info.event.start?.toISOString(),
-        end: info.event.end?.toISOString() ?? undefined,
-      });
-    } catch {
-      info.revert();
-      toast.error("Nepodařilo se přesunout událost");
-    }
-  }
+  const dayEvents = events.filter(e => isSameDay(new Date(e.start), selectedDate));
+  const sortedDayEvents = [...dayEvents].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
-  const calendarEvents = events.map((e) => ({
-    id: String(e.id),
-    title: e.title,
-    start: e.start,
-    end: e.end ?? undefined,
-    allDay: e.all_day,
-    backgroundColor: e.color,
-    borderColor: "transparent",
-    extendedProps: { event: e },
-  }));
+  const monthLabel = format(selectedDate, "LLLL yyyy", { locale: cs });
+  const monthLabelCap = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+
+  function hasEvent(day: Date) {
+    return events.some(e => isSameDay(new Date(e.start), day));
+  }
 
   return (
     <div className="space-y-3">
-      {/* View switcher */}
-      <div className="glass rounded-2xl p-1 flex gap-1">
-        {VIEWS.map(({ key, label }) => (
+      {/* Week strip */}
+      <div className="glass rounded-2xl p-4">
+        <div className="flex items-center justify-between mb-3">
           <button
-            key={key}
-            onClick={() => changeView(key)}
-            className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all ${
-              view === key
-                ? "bg-indigo-600 text-white shadow-lg"
-                : "text-slate-400 hover:text-slate-200"
-            }`}
+            onClick={() => setWeekOffset(w => w - 1)}
+            className="w-8 h-8 rounded-xl bg-slate-700/50 text-slate-300 flex items-center justify-center text-lg active:scale-90 transition-all"
           >
-            {label}
+            ‹
           </button>
-        ))}
-      </div>
-
-      {/* Calendar card */}
-      <div className="glass rounded-2xl p-3">
-        <div className="flex justify-end mb-3">
+          <span className="text-white font-semibold text-sm">{monthLabelCap}</span>
           <button
-            onClick={() => setModal({})}
-            className="btn-primary text-sm px-4 py-2"
+            onClick={() => setWeekOffset(w => w + 1)}
+            className="w-8 h-8 rounded-xl bg-slate-700/50 text-slate-300 flex items-center justify-center text-lg active:scale-90 transition-all"
           >
-            + Nová událost
+            ›
           </button>
         </div>
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-          locale={csLocale}
-          headerToolbar={{ left: "prev,next", center: "title", right: "today" }}
-          initialView="dayGridMonth"
-          events={calendarEvents}
-          selectable
-          editable
-          selectMirror
-          dayMaxEvents={3}
-          height="auto"
-          datesSet={(info) => fetchEvents(info.start, info.end)}
-          select={(info: DateSelectArg) => {
-            setModal({ initialStart: info.start });
-            calendarRef.current?.getApi().unselect();
-          }}
-          eventClick={(info: EventClickArg) =>
-            setModal({ event: info.event.extendedProps.event as Event })
-          }
-          eventDrop={handleDrop}
-          nowIndicator
-        />
+
+        <div className="grid grid-cols-7 mb-1">
+          {DAY_LABELS.map(d => (
+            <div key={d} className="text-center text-xs text-slate-500 font-medium py-1">{d}</div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-1">
+          {weekDays.map((day) => {
+            const selected = isSameDay(day, selectedDate);
+            const today = isToday(day);
+            const dot = hasEvent(day);
+            return (
+              <button
+                key={day.toISOString()}
+                onClick={() => setSelectedDate(day)}
+                className={`flex flex-col items-center py-1.5 rounded-xl transition-all active:scale-90 ${
+                  selected ? "bg-indigo-600" : today ? "bg-indigo-500/20" : ""
+                }`}
+              >
+                <span className={`text-sm font-bold ${selected ? "text-white" : today ? "text-indigo-400" : "text-slate-300"}`}>
+                  {format(day, "d")}
+                </span>
+                <div className={`w-1 h-1 rounded-full mt-0.5 ${dot ? (selected ? "bg-white" : "bg-indigo-400") : "invisible"}`} />
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Day header */}
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-white font-semibold text-sm">
+          {isToday(selectedDate) ? "Dnes" : format(selectedDate, "EEEE d. MMMM", { locale: cs })}
+        </h2>
+        <button
+          onClick={() => setModal({ initialStart: selectedDate })}
+          className="btn-primary text-xs px-3 py-1.5"
+        >
+          + Nová událost
+        </button>
+      </div>
+
+      {/* Events list */}
+      {sortedDayEvents.length === 0 ? (
+        <div className="glass rounded-2xl py-10 text-center text-slate-500">
+          <div className="text-3xl mb-2">📅</div>
+          <p className="text-sm">Žádné události</p>
+          <button
+            onClick={() => setModal({ initialStart: selectedDate })}
+            className="mt-3 text-indigo-400 text-xs font-medium"
+          >
+            Přidat událost
+          </button>
+        </div>
+      ) : (
+        <div className="glass rounded-2xl overflow-hidden">
+          <ul className="divide-y divide-white/5">
+            {sortedDayEvents.map((e) => (
+              <li
+                key={e.id}
+                className="flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition-all cursor-pointer"
+                onClick={() => setModal({ event: e })}
+              >
+                <div className="shrink-0 text-center w-12">
+                  {e.all_day ? (
+                    <span className="text-xs text-slate-400 font-medium">Celý den</span>
+                  ) : (
+                    <>
+                      <p className="text-sm font-bold text-white">{format(new Date(e.start), "HH:mm")}</p>
+                      {e.end && <p className="text-xs text-slate-500">{format(new Date(e.end), "HH:mm")}</p>}
+                    </>
+                  )}
+                </div>
+                <div
+                  className="w-1 self-stretch rounded-full shrink-0"
+                  style={{ backgroundColor: e.color || "#6366f1" }}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">{e.title}</p>
+                  {e.description && (
+                    <p className="text-xs text-slate-500 truncate mt-0.5">{e.description}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {modal !== null && (
         <EventModal

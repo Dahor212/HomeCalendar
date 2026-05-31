@@ -4,6 +4,11 @@ const BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api
 
 const api = axios.create({ baseURL: BASE });
 
+api.interceptors.response.use(
+  (r) => r,
+  (error) => Promise.reject(error)
+);
+
 export default api;
 
 // Push notification helpers

@@ -1,19 +1,12 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 from .. import models, schemas
 from ..database import get_db
 from ..auth import get_default_user
 
 router = APIRouter(prefix="/api/events", tags=["events"])
-
-
-def _visible_events(db: Session, user: models.User):
-    return db.query(models.Event).filter(
-        or_(models.Event.creator_id == user.id, models.Event.shared == True)
-    )
 
 
 @router.get("", response_model=list[schemas.EventOut])
@@ -23,7 +16,7 @@ def list_events(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_default_user),
 ):
-    q = _visible_events(db, current_user)
+    q = db.query(models.Event)
     if start:
         q = q.filter(models.Event.start >= start)
     if end:
@@ -48,9 +41,8 @@ def create_event(
 def get_event(
     event_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_default_user),
 ):
-    event = _visible_events(db, current_user).filter(models.Event.id == event_id).first()
+    event = db.query(models.Event).filter(models.Event.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Událost nenalezena")
     return event
@@ -61,19 +53,14 @@ def update_event(
     event_id: int,
     event_in: schemas.EventUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_default_user),
 ):
-    event = db.query(models.Event).filter(
-        models.Event.id == event_id,
-        models.Event.creator_id == current_user.id,
-    ).first()
+    event = db.query(models.Event).filter(models.Event.id == event_id).first()
     if not event:
-        raise HTTPException(status_code=404, detail="Událost nenalezena nebo nemáte oprávnění")
+        raise HTTPException(status_code=404, detail="Událost nenalezena")
 
     for field, value in event_in.model_dump(exclude_unset=True).items():
         setattr(event, field, value)
 
-    # Reset reminder if time changed
     if "start" in event_in.model_dump(exclude_unset=True):
         event.reminder_sent = False
 
@@ -86,13 +73,9 @@ def update_event(
 def delete_event(
     event_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_default_user),
 ):
-    event = db.query(models.Event).filter(
-        models.Event.id == event_id,
-        models.Event.creator_id == current_user.id,
-    ).first()
+    event = db.query(models.Event).filter(models.Event.id == event_id).first()
     if not event:
-        raise HTTPException(status_code=404, detail="Událost nenalezena nebo nemáte oprávnění")
+        raise HTTPException(status_code=404, detail="Událost nenalezena")
     db.delete(event)
     db.commit()

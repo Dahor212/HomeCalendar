@@ -2,22 +2,11 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 from .. import models, schemas
 from ..database import get_db
 from ..auth import get_default_user
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
-
-
-def _visible_tasks(db: Session, user: models.User):
-    return db.query(models.Task).filter(
-        or_(
-            models.Task.creator_id == user.id,
-            models.Task.assigned_to == user.id,
-            models.Task.shared == True,
-        )
-    )
 
 
 @router.get("", response_model=list[schemas.TaskOut])
@@ -26,7 +15,7 @@ def list_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_default_user),
 ):
-    q = _visible_tasks(db, current_user)
+    q = db.query(models.Task)
     if completed is not None:
         q = q.filter(models.Task.completed == completed)
     return q.order_by(models.Task.due_date.asc().nullslast(), models.Task.created_at.desc()).all()
@@ -49,9 +38,8 @@ def create_task(
 def get_task(
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_default_user),
 ):
-    task = _visible_tasks(db, current_user).filter(models.Task.id == task_id).first()
+    task = db.query(models.Task).filter(models.Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Úkol nenalezen")
     return task
@@ -62,14 +50,10 @@ def update_task(
     task_id: int,
     task_in: schemas.TaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_default_user),
 ):
-    task = db.query(models.Task).filter(
-        models.Task.id == task_id,
-        models.Task.creator_id == current_user.id,
-    ).first()
+    task = db.query(models.Task).filter(models.Task.id == task_id).first()
     if not task:
-        raise HTTPException(status_code=404, detail="Úkol nenalezen nebo nemáte oprávnění")
+        raise HTTPException(status_code=404, detail="Úkol nenalezen")
 
     data = task_in.model_dump(exclude_unset=True)
     for field, value in data.items():
@@ -92,9 +76,8 @@ def update_task(
 def toggle_task(
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_default_user),
 ):
-    task = _visible_tasks(db, current_user).filter(models.Task.id == task_id).first()
+    task = db.query(models.Task).filter(models.Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Úkol nenalezen")
 
@@ -109,13 +92,9 @@ def toggle_task(
 def delete_task(
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_default_user),
 ):
-    task = db.query(models.Task).filter(
-        models.Task.id == task_id,
-        models.Task.creator_id == current_user.id,
-    ).first()
+    task = db.query(models.Task).filter(models.Task.id == task_id).first()
     if not task:
-        raise HTTPException(status_code=404, detail="Úkol nenalezen nebo nemáte oprávnění")
+        raise HTTPException(status_code=404, detail="Úkol nenalezen")
     db.delete(task)
     db.commit()

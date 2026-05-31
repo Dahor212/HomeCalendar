@@ -56,3 +56,18 @@ export interface TaskCreate {
   shared?: boolean;
   reminder_minutes?: number;
 }
+
+export interface ShoppingItem {
+  id: number;
+  name: string;
+  quantity: string;
+  category_name: string;
+  checked: boolean;
+  sort_order: number;
+}
+
+export interface ShoppingItemCreate {
+  name: string;
+  quantity?: string;
+  category_name?: string;
+}
