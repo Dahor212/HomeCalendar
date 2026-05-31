@@ -111,6 +111,7 @@ class ShoppingItemCreate(BaseModel):
     name: str
     quantity: str = ""
     category_name: str = "Ostatní"
+    url: str = ""
 
 
 class ShoppingItemUpdate(BaseModel):
@@ -119,6 +120,7 @@ class ShoppingItemUpdate(BaseModel):
     category_name: Optional[str] = None
     checked: Optional[bool] = None
     sort_order: Optional[int] = None
+    url: Optional[str] = None
 
 
 class ShoppingItemOut(BaseModel):
@@ -128,6 +130,7 @@ class ShoppingItemOut(BaseModel):
     category_name: str
     checked: bool
     sort_order: int
+    url: str = ""
 
     model_config = {"from_attributes": True}
 

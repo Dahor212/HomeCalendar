@@ -64,10 +64,12 @@ export interface ShoppingItem {
   category_name: string;
   checked: boolean;
   sort_order: number;
+  url: string;
 }
 
 export interface ShoppingItemCreate {
   name: string;
   quantity?: string;
   category_name?: string;
+  url?: string;
 }

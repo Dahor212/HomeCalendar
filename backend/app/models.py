@@ -99,4 +99,5 @@ class ShoppingItem(Base):
     category_name = Column(String, default="Ostatní")
     checked = Column(Boolean, default=False)
     sort_order = Column(Integer, default=0)
+    url = Column(String, default="")
     created_at = Column(DateTime(timezone=True), server_default=func.now())

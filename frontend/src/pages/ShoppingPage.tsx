@@ -27,7 +27,7 @@ export default function ShoppingPage() {
 
   async function addItem() {
     if (!newName.trim()) return;
-    await api.post("/shopping", { name: newName.trim(), quantity: newQty.trim(), category_name: newCat });
+    await api.post("/shopping", { name: newName.trim(), quantity: newQty.trim(), category_name: newCat, url: "" });
     setNewName(""); setNewQty("");
     setShowAdd(false);
     load();
@@ -160,9 +160,22 @@ export default function ShoppingPage() {
                     <p className={`text-sm font-medium ${item.checked ? "line-through text-slate-500" : "text-white"}`}>
                       {item.name}
                     </p>
-                    {item.quantity && (
-                      <p className="text-xs text-slate-500">{item.quantity}</p>
-                    )}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {item.quantity && (
+                        <p className="text-xs text-slate-500">{item.quantity}</p>
+                      )}
+                      {item.url && (
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-xs text-indigo-400 flex items-center gap-0.5 active:opacity-70"
+                        >
+                          🔗 {(() => { try { return new URL(item.url).hostname.replace(/^www\./, ""); } catch { return "odkaz"; } })()}
+                        </a>
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={() => deleteItem(item.id)}

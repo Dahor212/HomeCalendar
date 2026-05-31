@@ -7,6 +7,7 @@ import CategoriesPage from "./pages/CategoriesPage";
 import HomePage from "./pages/HomePage";
 import ShoppingPage from "./pages/ShoppingPage";
 import LandingPage from "./pages/LandingPage";
+import ShareReceivePage from "./pages/ShareReceivePage";
 import BytApp from "./pages/byt/BytApp";
 import api, { registerPushSubscription } from "./api/client";
 
@@ -114,6 +115,9 @@ export default function App() {
     <Routes>
       {/* Landing */}
       <Route path="/" element={<LandingPage />} />
+
+      {/* Web Share Target — PWA share sheet handler */}
+      <Route path="/share" element={<ShareReceivePage />} />
 
       {/* Byt section — has its own layout/nav */}
       <Route path="/byt/*" element={<BytApp />} />

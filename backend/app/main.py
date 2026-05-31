@@ -2,6 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from .database import Base, engine
 from .routers import events, tasks, push, categories, shopping
 from .services.scheduler import start_scheduler, stop_scheduler
@@ -12,6 +13,10 @@ logging.basicConfig(level=logging.INFO)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    # Add url column to shopping_items if it doesn't exist yet
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE shopping_items ADD COLUMN IF NOT EXISTS url TEXT DEFAULT ''"))
+        conn.commit()
     start_scheduler()
     yield
     stop_scheduler()
