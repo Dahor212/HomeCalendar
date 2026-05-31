@@ -104,7 +104,7 @@ export default function TaskModal({ task, categories, onSave, onDelete, onClose 
                       : `${PRIORITY_COLORS[p].bg} ${PRIORITY_COLORS[p].text}`
                   }`}
                 >
-                  {priorityConfig[p].label}
+                  {p === "low" ? "Nízká" : p === "medium" ? "Střední" : "Vysoká"}
                 </button>
               ))}
             </div>
