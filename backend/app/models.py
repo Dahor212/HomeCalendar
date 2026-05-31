@@ -26,6 +26,16 @@ class User(Base):
     push_subscriptions = relationship("PushSubscription", back_populates="user", cascade="all, delete-orphan")
 
 
+class Category(Base):
+    __tablename__ = "categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    color = Column(String, default="#6366f1")
+    icon = Column(String, default="📁")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class Event(Base):
     __tablename__ = "events"
 
@@ -35,8 +45,9 @@ class Event(Base):
     start = Column(DateTime(timezone=True), nullable=False)
     end = Column(DateTime(timezone=True), nullable=True)
     all_day = Column(Boolean, default=False)
-    color = Column(String, default="#3B82F6")
+    color = Column(String, default="#6366f1")
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     shared = Column(Boolean, default=True)
     reminder_minutes = Column(Integer, default=30)
     reminder_sent = Column(Boolean, default=False)
@@ -57,6 +68,7 @@ class Task(Base):
     priority = Column(String, default="medium")  # low, medium, high
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     assigned_to = Column(Integer, ForeignKey("users.id"), nullable=True)
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     shared = Column(Boolean, default=True)
     reminder_minutes = Column(Integer, default=60)
     reminder_sent = Column(Boolean, default=False)

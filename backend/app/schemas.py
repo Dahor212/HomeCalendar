@@ -30,6 +30,28 @@ class Token(BaseModel):
     user: UserOut
 
 
+# Categories
+class CategoryCreate(BaseModel):
+    name: str
+    color: str = "#6366f1"
+    icon: str = "📁"
+
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+
+
+class CategoryOut(BaseModel):
+    id: int
+    name: str
+    color: str
+    icon: str
+
+    model_config = {"from_attributes": True}
+
+
 # Events
 class EventCreate(BaseModel):
     title: str
@@ -37,7 +59,8 @@ class EventCreate(BaseModel):
     start: datetime
     end: Optional[datetime] = None
     all_day: bool = False
-    color: str = "#3B82F6"
+    color: str = "#6366f1"
+    category_id: Optional[int] = None
     shared: bool = True
     reminder_minutes: int = 30
 
@@ -49,6 +72,7 @@ class EventUpdate(BaseModel):
     end: Optional[datetime] = None
     all_day: Optional[bool] = None
     color: Optional[str] = None
+    category_id: Optional[int] = None
     shared: Optional[bool] = None
     reminder_minutes: Optional[int] = None
 
@@ -61,6 +85,7 @@ class EventOut(BaseModel):
     end: Optional[datetime]
     all_day: bool
     color: str
+    category_id: Optional[int]
     creator_id: int
     shared: bool
     reminder_minutes: int
@@ -75,7 +100,7 @@ class TaskCreate(BaseModel):
     description: Optional[str] = ""
     due_date: Optional[datetime] = None
     priority: str = "medium"
-    assigned_to: Optional[int] = None
+    category_id: Optional[int] = None
     shared: bool = True
     reminder_minutes: int = 60
 
@@ -85,7 +110,7 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
     due_date: Optional[datetime] = None
     priority: Optional[str] = None
-    assigned_to: Optional[int] = None
+    category_id: Optional[int] = None
     shared: Optional[bool] = None
     reminder_minutes: Optional[int] = None
     completed: Optional[bool] = None
@@ -99,8 +124,8 @@ class TaskOut(BaseModel):
     completed: bool
     completed_at: Optional[datetime]
     priority: str
+    category_id: Optional[int]
     creator_id: int
-    assigned_to: Optional[int]
     shared: bool
     reminder_minutes: int
     created_at: datetime

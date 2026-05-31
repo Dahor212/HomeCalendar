@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine
-from .routers import events, tasks, push
+from .routers import events, tasks, push, categories
 from .services.scheduler import start_scheduler, stop_scheduler
 
 logging.basicConfig(level=logging.INFO)
@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(events.router)
 app.include_router(tasks.router)
 app.include_router(push.router)
+app.include_router(categories.router)
 
 
 @app.get("/api/health")

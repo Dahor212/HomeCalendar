@@ -1,8 +1,8 @@
-export interface User {
+export interface Category {
   id: number;
-  username: string;
-  email: string;
-  is_active: boolean;
+  name: string;
+  color: string;
+  icon: string;
 }
 
 export interface Event {
@@ -13,6 +13,7 @@ export interface Event {
   end: string | null;
   all_day: boolean;
   color: string;
+  category_id: number | null;
   creator_id: number;
   shared: boolean;
   reminder_minutes: number;
@@ -26,6 +27,7 @@ export interface EventCreate {
   end?: string;
   all_day?: boolean;
   color?: string;
+  category_id?: number;
   shared?: boolean;
   reminder_minutes?: number;
 }
@@ -38,8 +40,8 @@ export interface Task {
   completed: boolean;
   completed_at: string | null;
   priority: "low" | "medium" | "high";
+  category_id: number | null;
   creator_id: number;
-  assigned_to: number | null;
   shared: boolean;
   reminder_minutes: number;
   created_at: string;
@@ -50,7 +52,7 @@ export interface TaskCreate {
   description?: string;
   due_date?: string;
   priority?: "low" | "medium" | "high";
-  assigned_to?: number;
+  category_id?: number;
   shared?: boolean;
   reminder_minutes?: number;
 }
