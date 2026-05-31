@@ -4,26 +4,49 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-slate-900 text-white;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  input[type="datetime-local"],
+  input[type="date"],
+  input[type="time"] {
+    color-scheme: dark;
+  }
+
+  select option {
+    background-color: #1e293b;
+    color: white;
   }
 }
 
-/* FullCalendar overrides */
-.fc {
-  font-family: inherit;
-}
-.fc .fc-button-primary {
-  @apply bg-blue-600 border-blue-600;
-}
-.fc .fc-button-primary:hover {
-  @apply bg-blue-700 border-blue-700;
-}
-.fc .fc-button-primary:disabled {
-  @apply bg-blue-400 border-blue-400;
-}
-.fc .fc-daygrid-event {
-  @apply cursor-pointer;
-}
-.fc .fc-toolbar-title {
-  @apply text-lg font-semibold;
+@layer components {
+  .glass {
+    background: rgba(30, 41, 59, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-strong {
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+
+  .btn-primary {
+    @apply bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl py-2.5 px-4 transition-all active:scale-95;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  }
+
+  .input-dark {
+    @apply w-full bg-slate-800/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
 }

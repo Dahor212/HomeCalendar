@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Task, TaskCreate, User } from "../types";
+import { Task, TaskCreate, Category } from "../types";
 
 interface Props {
   task?: Task | null;
-  users: User[];
-  currentUserId: number;
+  categories: Category[];
   onSave: (data: TaskCreate) => void;
   onDelete?: () => void;
   onClose: () => void;
@@ -13,21 +12,25 @@ interface Props {
 
 const REMINDER_OPTIONS = [
   { value: 0, label: "Bez připomínky" },
-  { value: 30, label: "30 minut předem" },
+  { value: 30, label: "30 min předem" },
   { value: 60, label: "1 hodinu předem" },
-  { value: 120, label: "2 hodiny předem" },
   { value: 1440, label: "1 den předem" },
 ];
 
-export default function TaskModal({ task, users, currentUserId, onSave, onDelete, onClose }: Props) {
+const PRIORITY_COLORS = {
+  low: { bg: "bg-emerald-500/20", text: "text-emerald-400", active: "bg-emerald-600" },
+  medium: { bg: "bg-amber-500/20", text: "text-amber-400", active: "bg-amber-600" },
+  high: { bg: "bg-red-500/20", text: "text-red-400", active: "bg-red-600" },
+};
+
+export default function TaskModal({ task, categories, onSave, onDelete, onClose }: Props) {
   const [title, setTitle] = useState(task?.title ?? "");
   const [description, setDescription] = useState(task?.description ?? "");
   const [dueDate, setDueDate] = useState(
     task?.due_date ? format(new Date(task.due_date), "yyyy-MM-dd'T'HH:mm") : ""
   );
-  const [priority, setPriority] = useState<"low" | "medium" | "high">(task?.priority as any ?? "medium");
-  const [assignedTo, setAssignedTo] = useState<number | "">(task?.assigned_to ?? "");
-  const [shared, setShared] = useState(task?.shared ?? true);
+  const [priority, setPriority] = useState<"low" | "medium" | "high">(task?.priority ?? "medium");
+  const [categoryId, setCategoryId] = useState<number | undefined>(task?.category_id ?? undefined);
   const [reminderMinutes, setReminderMinutes] = useState(task?.reminder_minutes ?? 60);
 
   function handleSubmit(e: React.FormEvent) {
@@ -38,72 +41,65 @@ export default function TaskModal({ task, users, currentUserId, onSave, onDelete
       description,
       due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
       priority,
-      assigned_to: assignedTo !== "" ? Number(assignedTo) : undefined,
-      shared,
+      category_id: categoryId,
       reminder_minutes: reminderMinutes,
     });
   }
 
-  const priorityColors = {
-    low: "bg-green-100 text-green-700 border-green-300",
-    medium: "bg-yellow-100 text-yellow-700 border-yellow-300",
-    high: "bg-red-100 text-red-700 border-red-300",
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-5 border-b">
-          <h2 className="text-lg font-semibold">{task ? "Upravit úkol" : "Nový úkol"}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">
-            &times;
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
+      <div
+        className="glass-strong w-full max-w-lg rounded-t-3xl p-5 pb-8 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-white">{task ? "Upravit úkol" : "Nový úkol"}</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-slate-700/50 text-slate-400 flex items-center justify-center text-xl active:scale-90">
+            ×
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Název *</label>
-            <input
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Název úkolu"
-              required
-              autoFocus
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            className="input-dark"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Název úkolu"
+            required
+            autoFocus
+          />
+
+          <textarea
+            className="input-dark resize-none"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+            placeholder="Popis (volitelné)"
+          />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Popis</label>
-            <textarea
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              placeholder="Volitelný popis"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Termín</label>
+            <label className="text-xs text-slate-400 font-medium mb-1 block">Termín</label>
             <input
               type="datetime-local"
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="input-dark text-sm"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Priorita</label>
+            <label className="text-xs text-slate-400 font-medium mb-2 block">Priorita</label>
             <div className="flex gap-2">
               {(["low", "medium", "high"] as const).map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => setPriority(p)}
-                  className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                    priority === p ? priorityColors[p] + " ring-2 ring-offset-1 ring-gray-400" : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                  className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+                    priority === p
+                      ? `${PRIORITY_COLORS[p].active} text-white`
+                      : `${PRIORITY_COLORS[p].bg} ${PRIORITY_COLORS[p].text}`
                   }`}
                 >
                   {p === "low" ? "Nízká" : p === "medium" ? "Střední" : "Vysoká"}
@@ -112,26 +108,40 @@ export default function TaskModal({ task, users, currentUserId, onSave, onDelete
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Přiřadit uživateli</label>
-            <select
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={assignedTo}
-              onChange={(e) => setAssignedTo(e.target.value === "" ? "" : Number(e.target.value))}
-            >
-              <option value="">Nikomu (sdílený)</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.username} {u.id === currentUserId ? "(já)" : ""}
-                </option>
-              ))}
-            </select>
-          </div>
+          {categories.length > 0 && (
+            <div>
+              <label className="text-xs text-slate-400 font-medium mb-2 block">Kategorie</label>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setCategoryId(undefined)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                    !categoryId ? "bg-indigo-600 border-indigo-500 text-white" : "border-white/10 text-slate-400"
+                  }`}
+                >
+                  Žádná
+                </button>
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setCategoryId(cat.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all flex items-center gap-1 ${
+                      categoryId === cat.id ? "text-white" : "border-white/10 text-slate-400"
+                    }`}
+                    style={categoryId === cat.id ? { backgroundColor: cat.color + "33", borderColor: cat.color } : {}}
+                  >
+                    {cat.icon} {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Připomínka</label>
+            <label className="text-xs text-slate-400 font-medium mb-1 block">Připomínka</label>
             <select
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-dark"
               value={reminderMinutes}
               onChange={(e) => setReminderMinutes(Number(e.target.value))}
             >
@@ -141,31 +151,15 @@ export default function TaskModal({ task, users, currentUserId, onSave, onDelete
             </select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="sharedTask"
-              checked={shared}
-              onChange={(e) => setShared(e.target.checked)}
-              className="w-4 h-4 text-blue-600"
-            />
-            <label htmlFor="sharedTask" className="text-sm font-medium text-gray-700">
-              Viditelný pro všechny uživatele
-            </label>
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
-            >
+          <div className="flex gap-3 pt-1">
+            <button type="submit" className="btn-primary flex-1">
               {task ? "Uložit změny" : "Vytvořit"}
             </button>
             {onDelete && (
               <button
                 type="button"
                 onClick={onDelete}
-                className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium transition-colors"
+                className="px-4 py-2.5 rounded-xl bg-red-500/10 text-red-400 font-semibold text-sm active:scale-95 transition-all"
               >
                 Smazat
               </button>

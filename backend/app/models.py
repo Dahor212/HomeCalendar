@@ -22,8 +22,18 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     events = relationship("Event", foreign_keys="Event.creator_id", back_populates="creator")
-    tasks = relationship("Task", foreign_keys="Task.assigned_to", back_populates="assigned_user")
+    tasks = relationship("Task", foreign_keys="Task.creator_id", back_populates="creator")
     push_subscriptions = relationship("PushSubscription", back_populates="user", cascade="all, delete-orphan")
+
+
+class Category(Base):
+    __tablename__ = "categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    color = Column(String, default="#6366f1")
+    icon = Column(String, default="📁")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class Event(Base):
@@ -36,6 +46,7 @@ class Event(Base):
     end = Column(DateTime(timezone=True), nullable=True)
     all_day = Column(Boolean, default=False)
     color = Column(String, default="#3B82F6")
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     shared = Column(Boolean, default=True)
     reminder_minutes = Column(Integer, default=30)
@@ -54,15 +65,15 @@ class Task(Base):
     due_date = Column(DateTime(timezone=True), nullable=True)
     completed = Column(Boolean, default=False)
     completed_at = Column(DateTime(timezone=True), nullable=True)
-    priority = Column(String, default="medium")  # low, medium, high
+    priority = Column(String, default="medium")
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    assigned_to = Column(Integer, ForeignKey("users.id"), nullable=True)
     shared = Column(Boolean, default=True)
     reminder_minutes = Column(Integer, default=60)
     reminder_sent = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    assigned_user = relationship("User", foreign_keys=[assigned_to], back_populates="tasks")
+    creator = relationship("User", foreign_keys=[creator_id], back_populates="tasks")
 
 
 class PushSubscription(Base):
@@ -76,3 +87,15 @@ class PushSubscription(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="push_subscriptions")
+
+
+class ShoppingItem(Base):
+    __tablename__ = "shopping_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    quantity = Column(String, default="")
+    category_name = Column(String, default="Ostatní")
+    checked = Column(Boolean, default=False)
+    sort_order = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
