@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, NavLink } from "react-router-dom";
+import { Routes, Route, Navigate, NavLink, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import CalendarPage from "./pages/CalendarPage";
@@ -6,19 +6,25 @@ import TasksPage from "./pages/TasksPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import HomePage from "./pages/HomePage";
 import ShoppingPage from "./pages/ShoppingPage";
+import LandingPage from "./pages/LandingPage";
+import BytApp from "./pages/byt/BytApp";
 import api, { registerPushSubscription } from "./api/client";
 
 function BottomNav() {
+  const location = useLocation();
   const base = "flex flex-col items-center gap-0.5 flex-1 py-2 text-xs font-medium transition-all active:scale-95";
   const active = "text-indigo-400";
   const inactive = "text-slate-500";
 
+  // Only show for /app/* paths
+  if (!location.pathname.startsWith("/app")) return null;
+
   const tabs = [
-    { to: "/", icon: "🏠", label: "Domů", end: true },
-    { to: "/calendar", icon: "📅", label: "Kalendář", end: false },
-    { to: "/tasks", icon: "✅", label: "Úkoly", end: false },
-    { to: "/shopping", icon: "🛒", label: "Nákupy", end: false },
-    { to: "/more", icon: "⋯", label: "Více", end: false },
+    { to: "/app/home", icon: "🏠", label: "Domů", end: true },
+    { to: "/app/calendar", icon: "📅", label: "Kalendář", end: false },
+    { to: "/app/tasks", icon: "✅", label: "Úkoly", end: false },
+    { to: "/app/shopping", icon: "🛒", label: "Nákupy", end: false },
+    { to: "/app/more", icon: "⋯", label: "Více", end: false },
   ];
 
   return (
@@ -105,19 +111,37 @@ function MorePage() {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col max-w-lg mx-auto">
-      <main className="flex-1 overflow-y-auto pb-20 px-3 pt-4">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/tasks" element={<TasksPage />} />
-          <Route path="/shopping" element={<ShoppingPage />} />
-          <Route path="/more" element={<MorePage />} />
-          <Route path="/categories" element={<Navigate to="/more" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-      <BottomNav />
-    </div>
+    <Routes>
+      {/* Landing */}
+      <Route path="/" element={<LandingPage />} />
+
+      {/* Byt section — has its own layout/nav */}
+      <Route path="/byt/*" element={<BytApp />} />
+
+      {/* HomeCalendar app section */}
+      <Route path="/app/*" element={
+        <div className="min-h-screen bg-slate-900 flex flex-col max-w-lg mx-auto">
+          <main className="flex-1 overflow-y-auto pb-20 px-3 pt-4">
+            <Routes>
+              <Route path="home" element={<HomePage />} />
+              <Route path="calendar" element={<CalendarPage />} />
+              <Route path="tasks" element={<TasksPage />} />
+              <Route path="shopping" element={<ShoppingPage />} />
+              <Route path="more" element={<MorePage />} />
+              <Route path="categories" element={<Navigate to="/app/more" replace />} />
+              <Route index element={<Navigate to="/app/home" replace />} />
+              <Route path="*" element={<Navigate to="/app/home" replace />} />
+            </Routes>
+          </main>
+          <BottomNav />
+        </div>
+      } />
+
+      {/* Legacy redirects */}
+      <Route path="/calendar" element={<Navigate to="/app/calendar" replace />} />
+      <Route path="/tasks" element={<Navigate to="/app/tasks" replace />} />
+      <Route path="/shopping" element={<Navigate to="/app/shopping" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
