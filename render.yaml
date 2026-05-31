@@ -3,7 +3,6 @@ services:
     name: homecalendar-backend
     runtime: docker
     plan: free
-    rootDir: backend
     envVars:
       - key: DATABASE_URL
         sync: false
