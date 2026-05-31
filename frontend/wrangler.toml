@@ -1,0 +1,5 @@
+name = "homecalendar"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "./dist"
