@@ -1,12 +1,9 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAuthStore } from "../store/auth";
 import api, { registerPushSubscription } from "../api/client";
 
 export default function Navbar() {
-  const { user, logout } = useAuthStore();
-  const navigate = useNavigate();
   const location = useLocation();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
@@ -51,11 +48,6 @@ export default function Navbar() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   const navLink = (to: string, label: string) => (
     <Link
       to={to}
@@ -83,30 +75,17 @@ export default function Navbar() {
             {navLink("/tasks", "Úkoly")}
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleNotifications}
-              title={notificationsEnabled ? "Vypnout notifikace" : "Zapnout notifikace"}
-              className={`p-2 rounded-full transition-colors ${
-                notificationsEnabled
-                  ? "bg-green-500 text-white hover:bg-green-600"
-                  : "bg-blue-500 text-blue-200 hover:bg-blue-400"
-              }`}
-            >
-              {notificationsEnabled ? "🔔" : "🔕"}
-            </button>
-
-            <div className="text-blue-100 text-sm">
-              <span className="font-medium text-white">{user?.username}</span>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="px-3 py-1.5 text-sm bg-blue-800 text-blue-100 rounded-md hover:bg-blue-900 transition-colors"
-            >
-              Odhlásit
-            </button>
-          </div>
+          <button
+            onClick={toggleNotifications}
+            title={notificationsEnabled ? "Vypnout notifikace" : "Zapnout notifikace"}
+            className={`p-2 rounded-full transition-colors ${
+              notificationsEnabled
+                ? "bg-green-500 text-white hover:bg-green-600"
+                : "bg-blue-500 text-blue-200 hover:bg-blue-400"
+            }`}
+          >
+            {notificationsEnabled ? "🔔" : "🔕"}
+          </button>
         </div>
       </div>
     </nav>

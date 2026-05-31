@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from .. import models, schemas
 from ..database import get_db
-from ..auth import get_current_user
+from ..auth import get_default_user
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 
@@ -24,7 +24,7 @@ def _visible_tasks(db: Session, user: models.User):
 def list_tasks(
     completed: Optional[bool] = Query(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     q = _visible_tasks(db, current_user)
     if completed is not None:
@@ -36,7 +36,7 @@ def list_tasks(
 def create_task(
     task_in: schemas.TaskCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     task = models.Task(**task_in.model_dump(), creator_id=current_user.id)
     db.add(task)
@@ -49,7 +49,7 @@ def create_task(
 def get_task(
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     task = _visible_tasks(db, current_user).filter(models.Task.id == task_id).first()
     if not task:
@@ -62,7 +62,7 @@ def update_task(
     task_id: int,
     task_in: schemas.TaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     task = db.query(models.Task).filter(
         models.Task.id == task_id,
@@ -92,7 +92,7 @@ def update_task(
 def toggle_task(
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     task = _visible_tasks(db, current_user).filter(models.Task.id == task_id).first()
     if not task:
@@ -109,7 +109,7 @@ def toggle_task(
 def delete_task(
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     task = db.query(models.Task).filter(
         models.Task.id == task_id,

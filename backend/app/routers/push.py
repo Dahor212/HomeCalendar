@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
-from ..auth import get_current_user
+from ..auth import get_default_user
 from ..config import get_vapid_keys
 
 router = APIRouter(prefix="/api/push", tags=["push"])
@@ -17,7 +17,7 @@ def get_vapid_public_key(db: Session = Depends(get_db)):
 def subscribe(
     sub_in: schemas.PushSubscriptionCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     existing = db.query(models.PushSubscription).filter(
         models.PushSubscription.endpoint == sub_in.endpoint
@@ -46,7 +46,7 @@ def subscribe(
 def unsubscribe(
     sub_in: schemas.PushSubscriptionCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     db.query(models.PushSubscription).filter(
         models.PushSubscription.endpoint == sub_in.endpoint,

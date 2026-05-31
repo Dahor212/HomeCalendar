@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from .. import models, schemas
 from ..database import get_db
-from ..auth import get_current_user
+from ..auth import get_default_user
 
 router = APIRouter(prefix="/api/events", tags=["events"])
 
@@ -21,7 +21,7 @@ def list_events(
     start: Optional[datetime] = Query(None),
     end: Optional[datetime] = Query(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     q = _visible_events(db, current_user)
     if start:
@@ -35,7 +35,7 @@ def list_events(
 def create_event(
     event_in: schemas.EventCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     event = models.Event(**event_in.model_dump(), creator_id=current_user.id)
     db.add(event)
@@ -48,7 +48,7 @@ def create_event(
 def get_event(
     event_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     event = _visible_events(db, current_user).filter(models.Event.id == event_id).first()
     if not event:
@@ -61,7 +61,7 @@ def update_event(
     event_id: int,
     event_in: schemas.EventUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     event = db.query(models.Event).filter(
         models.Event.id == event_id,
@@ -86,7 +86,7 @@ def update_event(
 def delete_event(
     event_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_default_user),
 ):
     event = db.query(models.Event).filter(
         models.Event.id == event_id,

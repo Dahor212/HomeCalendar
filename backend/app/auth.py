@@ -36,21 +36,11 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> models.User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Neplatné přihlašovací údaje",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-
-    user = db.query(models.User).filter(models.User.id == int(user_id)).first()
-    if user is None or not user.is_active:
-        raise credentials_exception
+def get_default_user(db: Session = Depends(get_db)) -> models.User:
+    user = db.query(models.User).filter(models.User.is_active == True).first()
+    if user is None:
+        user = models.User(username="home", email="home@local", hashed_password="", is_active=True)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
     return user
